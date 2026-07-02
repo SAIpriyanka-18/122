@@ -2538,55 +2538,26 @@ window.addEventListener('DOMContentLoaded',function(){
   if(cpimg) cpimg.src=SMG_LOGO_SRC;
   const cpimg2=document.getElementById('CP_LOGO_SMWEC');
   if(cpimg2) cpimg2.src=SMWEC_LOGO_SRC;
-  // Only show college picker if no active session (session restore handles the logged-in case)
-  const hasSess=!!(sessionStorage.getItem('smv_sess_user')&&sessionStorage.getItem('smv_sess_college'));
-  if(!hasSess){
-    const cp=document.getElementById('CP');
-    const ls=document.getElementById('LS');
-    if(cp) cp.style.display='flex';
-    if(ls) ls.style.display='none';
-  }
+  // Always start at the college picker — no session is auto-restored
+  const cp=document.getElementById('CP');
+  const ls=document.getElementById('LS');
+  if(cp) cp.style.display='flex';
+  if(ls) ls.style.display='none';
 });
 
 // SEED DATA
 
 // =============================================
-// SESSION RESTORE — stay on same page after refresh
+// SESSION RESTORE — disabled: every page load requires a fresh login
 // =============================================
-window.addEventListener('DOMContentLoaded', async function(){
+window.addEventListener('DOMContentLoaded', function(){
+  // One-time cleanup: clear any session left over from before this change
   try{
-    const sessUser = sessionStorage.getItem('smv_sess_user');
-    const sessCollege = sessionStorage.getItem('smv_sess_college');
-    const sessHome = sessionStorage.getItem('smv_sess_home');
-    const sessPage = sessionStorage.getItem('smv_sess_page');
-    if(!sessUser || !sessCollege) return; // no session — show picker normally
-    // Validate account still exists in the cloud
-    const creds = await _refreshCredentialsCache(sessCollege);
-    if(!creds[sessUser]) return; // account removed — fall through to picker
-    // Restore state
-    CURRENT_COLLEGE = sessCollege;
-    HOME_COLLEGE = sessHome || sessCollege;
-    CU = sessUser;
-    await _loadVouchersFromCloud();
-    // Hide picker and login, show app
-    const cp = document.getElementById('CP'); if(cp) cp.style.display='none';
-    const ls = document.getElementById('LS'); if(ls) ls.style.display='none';
-    const app = document.getElementById('APP'); if(app) app.style.display='block';
-    const ub = document.getElementById('UB');
-    if(ub){ const a=ADMIN_ROLES[sessUser]; if(a) ub.textContent=a.label; }
-    const cs = document.getElementById('f_college');
-    if(cs){ cs.value=sessCollege; cs.disabled=true; }
-    updateCollegeSwitchPill();
-    setupRole();
-    initApp();
-    _updateXLPill();
-    _startLiveSync();
-    // Navigate to last active page
-    if(sessPage){
-      // Use setTimeout so DOM is fully ready
-      setTimeout(function(){ show(sessPage); }, 0);
-    }
-  }catch(e){ console.error('session restore',e); }
+    sessionStorage.removeItem('smv_sess_user');
+    sessionStorage.removeItem('smv_sess_college');
+    sessionStorage.removeItem('smv_sess_home');
+    sessionStorage.removeItem('smv_sess_page');
+  }catch(e){}
 });
 
 // Auto-relink Excel handle from previous session
